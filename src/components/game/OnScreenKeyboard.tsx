@@ -1,8 +1,10 @@
 import React, { useState, useCallback } from 'react';
 
+import { GameMode } from '@/types/game';
+
 interface OnScreenKeyboardProps {
   onInput: (char: string) => void;
-  mode: 'hangul' | 'math';
+  mode: GameMode;
 }
 
 // QWERTY layout for Korean keyboard
@@ -53,19 +55,19 @@ export const OnScreenKeyboard: React.FC<OnScreenKeyboardProps> = ({ onInput, mod
   const handleKeyPress = useCallback((char: string) => {
     setPressedKey(char);
     onInput(char);
-    
+
     // Visual feedback - remove pressed state after animation
     setTimeout(() => setPressedKey(null), 150);
   }, [onInput]);
 
-  const KeyButton: React.FC<{ char: string; label?: string; size?: 'normal' | 'large' }> = ({ 
-    char, 
-    label, 
-    size = 'normal' 
+  const KeyButton: React.FC<{ char: string; label?: string; size?: 'normal' | 'large' }> = ({
+    char,
+    label,
+    size = 'normal'
   }) => {
     const isPressed = pressedKey === char;
     const sizeClasses = size === 'large' ? 'w-14 h-14 text-2xl' : 'w-9 h-11 text-lg';
-    
+
     return (
       <button
         onClick={() => handleKeyPress(char)}
@@ -74,8 +76,8 @@ export const OnScreenKeyboard: React.FC<OnScreenKeyboardProps> = ({ onInput, mod
           flex items-center justify-center
           rounded-lg border-2 font-bold
           transition-all duration-100 active:scale-95
-          ${isPressed 
-            ? 'bg-primary text-primary-foreground border-primary scale-110 shadow-lg shadow-primary/50' 
+          ${isPressed
+            ? 'bg-primary text-primary-foreground border-primary scale-110 shadow-lg shadow-primary/50'
             : 'bg-background/80 text-primary border-primary/50 hover:bg-primary/20'
           }
         `}
@@ -85,11 +87,11 @@ export const OnScreenKeyboard: React.FC<OnScreenKeyboardProps> = ({ onInput, mod
     );
   };
 
-  if (mode === 'math') {
+  if (mode === 'math' || mode === 'arithmetic') {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-2 p-4">
         <p className="mb-2 text-sm text-muted-foreground font-korean">숫자를 눌러 정답을 입력하세요</p>
-        
+
         {/* Number grid 3x4 layout */}
         <div className="grid grid-cols-3 gap-3">
           {NUMBER_KEYS.slice(0, 9).map((num) => (
@@ -107,7 +109,7 @@ export const OnScreenKeyboard: React.FC<OnScreenKeyboardProps> = ({ onInput, mod
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-2 p-2">
       <p className="text-sm text-muted-foreground font-korean">자음/모음을 눌러 적을 공격하세요</p>
-      
+
       {/* QWERTY Layout */}
       <div className="flex flex-col items-center gap-1.5">
         {/* Row 1 */}
@@ -116,14 +118,14 @@ export const OnScreenKeyboard: React.FC<OnScreenKeyboardProps> = ({ onInput, mod
             <KeyButton key={key} char={key} label={label} />
           ))}
         </div>
-        
+
         {/* Row 2 - slightly offset */}
         <div className="flex gap-1 pl-3">
           {QWERTY_HANGUL_LAYOUT[1].map(({ key, label }) => (
             <KeyButton key={key} char={key} label={label} />
           ))}
         </div>
-        
+
         {/* Row 3 - more offset */}
         <div className="flex gap-1 pl-8">
           {QWERTY_HANGUL_LAYOUT[2].map(({ key, label }) => (
