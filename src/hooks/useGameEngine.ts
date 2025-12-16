@@ -5,8 +5,8 @@ import {
   LevelUpgrade, Rarity
 } from '@/types/game';
 import {
-  INITIAL_PLAYER_STATS, GAME_DURATION, HANGUL_LIST,
-  KEY_TO_HANGUL, ENEMY_TYPES, ARTIFACTS, SHOP_ITEMS
+  GAME_DURATION, INITIAL_PLAYER_STATS, HANGUL_LIST, WORD_LIST,
+  KEY_TO_HANGUL, ENEMY_TYPES, ARTIFACTS, SHOP_ITEMS, LEVEL_UPGRADES, API_CONFIG
 } from '@/constants/game';
 
 let idCounter = 0;
@@ -118,6 +118,12 @@ export function useGameEngine() {
 
   const generateQuestion = useCallback((mode: GameMode) => {
     if (mode === 'hangul') {
+      // Difficulty 4-5: Words
+      if (difficulty >= 4) {
+        const wordData = WORD_LIST[Math.floor(Math.random() * WORD_LIST.length)];
+        return { question: wordData.question, answer: wordData.answer };
+      }
+      // Difficulty 1-3: Single Characters
       const char = HANGUL_LIST[Math.floor(Math.random() * HANGUL_LIST.length)];
       return { question: char, answer: char };
     } else if (mode === 'math') {

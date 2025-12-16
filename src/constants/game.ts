@@ -27,6 +27,24 @@ export const HANGUL_LIST = [
   'ㅋ', 'ㅌ', 'ㅊ', 'ㅍ', 'ㅠ', 'ㅜ', 'ㅡ'
 ];
 
+export const WORD_LIST = [
+  { question: '사과', answer: 'ㅅㅏㄱㅘ' },
+  { question: '포도', answer: 'ㅍㅗㄷㅗ' },
+  { question: '수박', answer: 'ㅅㅜㅂㅏㄱ' },
+  { question: '학교', answer: 'ㅎㅏㄱㄱㅛ' },
+  { question: '안경', answer: 'ㅇㅏㄴㄱㅕㅇ' },
+  { question: '우산', answer: 'ㅇㅜㅅㅏㄴ' },
+  { question: '컴퓨터', answer: 'ㅋㅓㅁㅍㅠㅌㅓ' },
+  { question: '마우스', answer: 'ㅁㅏㅇㅜㅅㅡ' },
+  { question: '키보드', answer: 'ㅋㅣㅂㅗㄷㅡ' },
+  { question: '모니터', answer: 'ㅁㅗㄴㅣㅌㅓ' },
+  { question: '호랑이', answer: 'ㅎㅗㄹㅏㅇㅇㅣ' },
+  { question: '고양이', answer: 'ㄱㅗㅇㅑㅇㅇㅣ' },
+  { question: '강아지', answer: 'ㄱㅏㅇㅇㅏㅈㅣ' },
+  { question: '비행기', answer: 'ㅂㅣㅎㅐㅇㄱㅣ' },
+  { question: '자동차', answer: 'ㅈㅏㄷㅗㅇㅊㅏ' },
+];
+
 export const KEY_TO_HANGUL: Record<string, string> = {
   'KeyQ': 'ㅂ', 'KeyW': 'ㅈ', 'KeyE': 'ㄷ', 'KeyR': 'ㄱ', 'KeyT': 'ㅅ',
   'KeyY': 'ㅛ', 'KeyU': 'ㅕ', 'KeyI': 'ㅑ', 'KeyO': 'ㅐ', 'KeyP': 'ㅔ',
