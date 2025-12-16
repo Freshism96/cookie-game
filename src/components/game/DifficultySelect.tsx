@@ -21,7 +21,9 @@ export const DifficultySelect: React.FC<DifficultySelectProps> = ({
   onSelectDifficulty,
   onBack
 }) => {
-  const modeName = gameMode === 'hangul' ? '한글 타자' : '구구단';
+  const modeName =
+    gameMode === 'hangul' ? '한글 타자' :
+      gameMode === 'arithmetic' ? '덧셈/뺄셈' : '구구단';
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/95 p-5">

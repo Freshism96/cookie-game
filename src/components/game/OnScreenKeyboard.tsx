@@ -66,7 +66,9 @@ export const OnScreenKeyboard: React.FC<OnScreenKeyboardProps> = ({ onInput, mod
     size = 'normal'
   }) => {
     const isPressed = pressedKey === char;
-    const sizeClasses = size === 'large' ? 'w-14 h-14 text-2xl' : 'w-9 h-11 text-lg';
+    const sizeClasses = size === 'large'
+      ? 'w-16 h-16 text-2xl md:w-24 md:h-24 md:text-4xl'
+      : 'w-8 h-12 text-lg md:w-16 md:h-20 md:text-3xl';
 
     return (
       <button
