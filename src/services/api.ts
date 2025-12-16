@@ -29,12 +29,13 @@ export async function fetchStudentData(studentCode: string): Promise<StudentData
   }
 
   try {
+    const apiKey = localStorage.getItem('custom_api_key') || API_CONFIG.apiKey;
     const response = await fetch(
       `${API_CONFIG.baseUrl}/get/student/total?code=${studentCode}`,
       {
         method: 'GET',
         headers: {
-          'X-API-Key': API_CONFIG.apiKey
+          'X-API-Key': apiKey
         }
       }
     );
@@ -44,7 +45,7 @@ export async function fetchStudentData(studentCode: string): Promise<StudentData
     }
 
     const result: ApiResponse = await response.json();
-    
+
     if (result.result && result.data) {
       return {
         name: result.data.name,
