@@ -12,6 +12,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   const [apiKey, setApiKey] = useState(localStorage.getItem('custom_api_key') || '');
   const [showSetup, setShowSetup] = useState(!localStorage.getItem('custom_api_key'));
   const [showQR, setShowQR] = useState(false);
+  const [qrError, setQrError] = useState(false);
+  const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
   // Helper functions for safe Base64 encoding/decoding of Unicode strings
   const safeBtoa = (str: string) => {
@@ -116,12 +118,25 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
 
             {showQR ? (
               <div className="flex flex-col items-center animate-in fade-in zoom-in duration-300">
-                <div className="bg-white p-4 rounded-xl mb-6 shadow-lg">
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(getMagicLink())}`}
-                    alt="Magic Link QR"
-                    className="w-48 h-48"
-                  />
+                {isLocalhost && (
+                  <div className="bg-yellow-500/20 text-yellow-500 p-2 rounded mb-4 text-xs font-bold text-center w-full">
+                    ⚠️ 주의: 로컬 환경(Localhost)에서는 외부 접속이 불가능할 수 있습니다.
+                  </div>
+                )}
+
+                <div className="bg-white p-4 rounded-xl mb-6 shadow-lg min-h-[220px] flex items-center justify-center">
+                  {!qrError ? (
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(getMagicLink())}`}
+                      alt="Magic Link QR"
+                      className="w-48 h-48"
+                      onError={() => setQrError(true)}
+                    />
+                  ) : (
+                    <div className="w-48 h-48 flex items-center justify-center bg-gray-100 text-gray-400 text-xs text-center border-2 border-dashed border-gray-300 rounded">
+                      QR 생성 실패<br />(링크를 복사하세요)
+                    </div>
+                  )}
                 </div>
                 <p className="text-center text-muted-foreground mb-4 font-korean break-all text-sm px-4">
                   API Key가 포함된 매직 링크 QR입니다.
