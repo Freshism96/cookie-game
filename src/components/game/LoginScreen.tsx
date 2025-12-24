@@ -218,13 +218,17 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
           <input
             type="text"
             value={studentCode}
-            onChange={(e) => setStudentCode(e.target.value.toUpperCase())}
+            onChange={(e) => {
+              // Allow lowercase, block Korean (Hangul)
+              const val = e.target.value.replace(/[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/g, '');
+              setStudentCode(val);
+            }}
             onKeyDown={handleKeyDown}
             placeholder="CODE"
             disabled={isLoading || showSetup}
             autoFocus={!showSetup}
             autoComplete="off"
-            className="w-full border-2 border-primary bg-background/80 p-4 text-center font-terminal text-3xl uppercase text-primary placeholder:text-muted-foreground/30 focus:outline-none focus:ring-4 focus:ring-primary/20 box-glow transition-all"
+            className="w-full border-2 border-primary bg-background/80 p-4 text-center font-terminal text-3xl text-primary placeholder:text-muted-foreground/30 focus:outline-none focus:ring-4 focus:ring-primary/20 box-glow transition-all"
           />
         </div>
 
