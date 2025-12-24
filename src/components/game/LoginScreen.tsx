@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { fetchStudentData } from '@/services/api';
 import { UserData } from '@/types/game';
 
@@ -12,7 +13,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   const [apiKey, setApiKey] = useState(localStorage.getItem('custom_api_key') || '');
   const [showSetup, setShowSetup] = useState(!localStorage.getItem('custom_api_key'));
   const [showQR, setShowQR] = useState(false);
-  const [qrError, setQrError] = useState(false);
   const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
   // Helper functions for safe Base64 encoding/decoding of Unicode strings
@@ -125,18 +125,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                 )}
 
                 <div className="bg-white p-4 rounded-xl mb-6 shadow-lg min-h-[220px] flex items-center justify-center">
-                  {!qrError ? (
-                    <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(getMagicLink())}`}
-                      alt="Magic Link QR"
-                      className="w-48 h-48"
-                      onError={() => setQrError(true)}
-                    />
-                  ) : (
-                    <div className="w-48 h-48 flex items-center justify-center bg-gray-100 text-gray-400 text-xs text-center border-2 border-dashed border-gray-300 rounded">
-                      QR 생성 실패<br />(링크를 복사하세요)
-                    </div>
-                  )}
+                  <QRCodeSVG
+                    value={getMagicLink()}
+                    size={200}
+                    level={"H"}
+                    includeMargin={true}
+                  />
                 </div>
                 <p className="text-center text-muted-foreground mb-4 font-korean break-all text-sm px-4">
                   API Key가 포함된 매직 링크 QR입니다.
