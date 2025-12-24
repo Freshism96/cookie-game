@@ -13,6 +13,25 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   const [showSetup, setShowSetup] = useState(!localStorage.getItem('custom_api_key'));
   const [showQR, setShowQR] = useState(false);
 
+  // Helper functions for safe Base64 encoding/decoding of Unicode strings
+  const safeBtoa = (str: string) => {
+    try {
+      return btoa(unescape(encodeURIComponent(str)));
+    } catch (e) {
+      console.error("Encoding error", e);
+      return "";
+    }
+  };
+
+  const safeAtob = (str: string) => {
+    try {
+      return decodeURIComponent(escape(atob(str)));
+    } catch (e) {
+      console.error("Decoding error", e);
+      return "";
+    }
+  };
+
   // 1. Magic Link Logic: Check for 'k' parameter on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -20,16 +39,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
 
     if (magicKey) {
       try {
-        const decodedKey = atob(magicKey);
-        localStorage.setItem('custom_api_key', decodedKey);
-        setApiKey(decodedKey);
-        setShowSetup(false);
-        
-        // Clean URL without reloading
-        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-        window.history.replaceState({ path: newUrl }, '', newUrl);
-        
-        console.log('Magic Link: API Key configured successfully.');
+        const decodedKey = safeAtob(magicKey);
+        if (decodedKey) {
+          localStorage.setItem('custom_api_key', decodedKey);
+          setApiKey(decodedKey);
+          setShowSetup(false);
+
+          // Clean URL without reloading
+          const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+          window.history.replaceState({ path: newUrl }, '', newUrl);
+
+          console.log('Magic Link: API Key configured successfully.');
+        }
       } catch (e) {
         console.error('Invalid Magic Key encoding', e);
       }
@@ -71,18 +92,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
 
   const getMagicLink = () => {
     const origin = window.location.origin + window.location.pathname;
-    const encodedKey = btoa(apiKey);
+    const encodedKey = safeBtoa(apiKey);
     return `${origin}?k=${encodedKey}`;
   };
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/95 p-5">
-      
+
       {/* Teacher Setup / QR Modal */}
       {(showSetup || showQR) && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-sm">
           <div className="bg-background border-2 border-primary p-8 max-w-md w-full shadow-[0_0_50px_rgba(var(--primary),0.3)] relative">
-            <button 
+            <button
               onClick={() => { setShowSetup(false); setShowQR(false); }}
               className="absolute top-4 right-4 text-muted-foreground hover:text-primary font-bold text-xl"
             >
@@ -96,9 +117,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
             {showQR ? (
               <div className="flex flex-col items-center animate-in fade-in zoom-in duration-300">
                 <div className="bg-white p-4 rounded-xl mb-6 shadow-lg">
-                  <img 
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(getMagicLink())}`} 
-                    alt="Magic Link QR" 
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(getMagicLink())}`}
+                    alt="Magic Link QR"
                     className="w-48 h-48"
                   />
                 </div>
@@ -108,8 +129,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                 <div className="flex gap-2 w-full">
                   <button
                     onClick={() => {
-                        window.navigator.clipboard.writeText(getMagicLink());
-                        alert('초대 링크가 복사되었습니다!');
+                      window.navigator.clipboard.writeText(getMagicLink());
+                      alert('초대 링크가 복사되었습니다!');
                     }}
                     className="flex-1 bg-secondary hover:bg-secondary/80 text-secondary-foreground py-3 rounded font-korean font-bold transition-colors"
                   >
@@ -192,7 +213,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
           />
         </div>
 
-        <button 
+        <button
           onClick={handleLogin}
           disabled={isLoading || !studentCode}
           className="w-full py-4 bg-primary text-primary-foreground text-xl font-bold rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed font-korean shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
