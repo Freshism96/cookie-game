@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { fetchStudentData } from '@/services/api';
 import { UserData } from '@/types/game';
 
@@ -9,6 +9,32 @@ interface LoginScreenProps {
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   const [studentCode, setStudentCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [apiKey, setApiKey] = useState(localStorage.getItem('custom_api_key') || '');
+  const [showSetup, setShowSetup] = useState(!localStorage.getItem('custom_api_key'));
+  const [showQR, setShowQR] = useState(false);
+
+  // 1. Magic Link Logic: Check for 'k' parameter on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const magicKey = params.get('k');
+
+    if (magicKey) {
+      try {
+        const decodedKey = atob(magicKey);
+        localStorage.setItem('custom_api_key', decodedKey);
+        setApiKey(decodedKey);
+        setShowSetup(false);
+        
+        // Clean URL without reloading
+        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({ path: newUrl }, '', newUrl);
+        
+        console.log('Magic Link: API Key configured successfully.');
+      } catch (e) {
+        console.error('Invalid Magic Key encoding', e);
+      }
+    }
+  }, []);
 
   const handleLogin = async () => {
     if (!studentCode.trim()) return;
@@ -32,62 +58,116 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     }
   };
 
-  const [showSettings, setShowSettings] = useState(false);
-  const [customKey, setCustomKey] = useState(localStorage.getItem('custom_api_key') || '');
-
-  const saveApiKey = () => {
-    if (customKey.trim()) {
-      localStorage.setItem('custom_api_key', customKey.trim());
-      alert('API Key가 저장되었습니다.');
+  const saveApiKey = (key: string) => {
+    const trimmedKey = key.trim();
+    if (trimmedKey) {
+      localStorage.setItem('custom_api_key', trimmedKey);
+      setApiKey(trimmedKey);
     } else {
       localStorage.removeItem('custom_api_key');
-      alert('기본 API Key를 사용합니다.');
+      setApiKey('');
     }
-    setShowSettings(false);
+  };
+
+  const getMagicLink = () => {
+    const origin = window.location.origin + window.location.pathname;
+    const encodedKey = btoa(apiKey);
+    return `${origin}?k=${encodedKey}`;
   };
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/95 p-5">
-      {/* Settings Button */}
-      <button
-        onClick={() => setShowSettings(true)}
-        className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-primary transition-colors"
-      >
-        ⚙️ 설정
-      </button>
+      
+      {/* Teacher Setup / QR Modal */}
+      {(showSetup || showQR) && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-sm">
+          <div className="bg-background border-2 border-primary p-8 max-w-md w-full shadow-[0_0_50px_rgba(var(--primary),0.3)] relative">
+            <button 
+              onClick={() => { setShowSetup(false); setShowQR(false); }}
+              className="absolute top-4 right-4 text-muted-foreground hover:text-primary font-bold text-xl"
+            >
+              ✕
+            </button>
 
-      {/* Settings Modal */}
-      {showSettings && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80">
-          <div className="bg-background border border-primary p-6 max-w-sm w-full shadow-lg shadow-primary/20">
-            <h3 className="text-xl font-bold text-primary mb-4 font-korean">API 설정</h3>
-            <p className="text-sm text-muted-foreground mb-2 font-korean">새로운 API Key를 입력하세요:</p>
-            <input
-              type="text"
-              value={customKey}
-              onChange={(e) => setCustomKey(e.target.value)}
-              placeholder="기본 키 사용 (비워두기)"
-              className="w-full border border-primary/50 bg-secondary p-2 mb-4 text-sm font-terminal"
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowSettings(false)}
-                className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground font-korean"
-              >
-                취소
-              </button>
-              <button
-                onClick={saveApiKey}
-                className="px-4 py-2 text-sm bg-primary text-primary-foreground font-bold hover:bg-primary/90 font-korean"
-              >
-                저장
-              </button>
-            </div>
+            <h3 className="text-2xl font-bold text-primary mb-6 font-korean text-center">
+              {showQR ? '학생 초대 (QR 코드)' : '선생님 설정 (API Key)'}
+            </h3>
+
+            {showQR ? (
+              <div className="flex flex-col items-center animate-in fade-in zoom-in duration-300">
+                <div className="bg-white p-4 rounded-xl mb-6 shadow-lg">
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(getMagicLink())}`} 
+                    alt="Magic Link QR" 
+                    className="w-48 h-48"
+                  />
+                </div>
+                <p className="text-center text-muted-foreground mb-4 font-korean break-all text-sm px-4">
+                  API Key가 포함된 매직 링크 QR입니다.
+                </p>
+                <div className="flex gap-2 w-full">
+                  <button
+                    onClick={() => {
+                        window.navigator.clipboard.writeText(getMagicLink());
+                        alert('초대 링크가 복사되었습니다!');
+                    }}
+                    className="flex-1 bg-secondary hover:bg-secondary/80 text-secondary-foreground py-3 rounded font-korean font-bold transition-colors"
+                  >
+                    링크 복사
+                  </button>
+                  <button
+                    onClick={() => { setShowQR(false); setShowSetup(false); }}
+                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded font-korean font-bold transition-colors"
+                  >
+                    완료 (학생 화면으로)
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-primary font-korean">다했니 API Key 입력</label>
+                  <input
+                    type="text"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    placeholder="API Key를 입력하세요"
+                    className="w-full border-2 border-primary/50 bg-secondary/50 p-4 text-center font-terminal focus:border-primary focus:outline-none transition-colors"
+                  />
+                  <p className="text-xs text-muted-foreground font-korean text-center">
+                    * API Key는 브라우저에만 저장되며 서버로 전송되지 않습니다.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-3 mt-4">
+                  <button
+                    onClick={() => {
+                      saveApiKey(apiKey);
+                      setShowQR(true);
+                    }}
+                    disabled={!apiKey.trim()}
+                    className="w-full py-3 bg-primary text-primary-foreground font-bold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed font-korean"
+                  >
+                    API Key 저장 및 QR코드 생성
+                  </button>
+                  <button
+                    onClick={() => {
+                      saveApiKey(apiKey);
+                      setShowSetup(false);
+                    }}
+                    className="w-full py-3 bg-transparent border border-primary text-primary hover:bg-primary/10 font-korean font-bold"
+                  >
+                    저장하고 게임 시작하기
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      <h1 className="mb-4 text-4xl font-bold text-primary text-glow font-korean">
+      {/* Main Student Login View */}
+      <h1 className="mb-4 text-4xl lg:text-6xl font-bold text-primary text-glow font-korean animate-pulse-slow">
         다했니 시스템 디펜더
       </h1>
 
@@ -96,29 +176,52 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         <p>&gt; 외부 침입을 저지하십시오.</p>
       </div>
 
-      <div className="flex flex-col items-center gap-4">
-        <label className="text-2xl text-primary font-korean">학생 코드 입력:</label>
-        <input
-          type="text"
-          value={studentCode}
-          onChange={(e) => setStudentCode(e.target.value.toUpperCase())}
-          onKeyDown={handleKeyDown}
-          placeholder="CODE"
-          disabled={isLoading}
-          autoFocus={!showSettings}
-          autoComplete="off"
-          className="w-48 border border-primary bg-background p-2 text-center font-terminal text-2xl uppercase text-primary placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary box-glow"
-        />
+      <div className="flex flex-col items-center gap-6 w-full max-w-sm">
+        <div className="w-full space-y-2">
+          <label className="text-2xl text-primary font-korean block text-center">학생 코드 입력</label>
+          <input
+            type="text"
+            value={studentCode}
+            onChange={(e) => setStudentCode(e.target.value.toUpperCase())}
+            onKeyDown={handleKeyDown}
+            placeholder="CODE"
+            disabled={isLoading || showSetup}
+            autoFocus={!showSetup}
+            autoComplete="off"
+            className="w-full border-2 border-primary bg-background/80 p-4 text-center font-terminal text-3xl uppercase text-primary placeholder:text-muted-foreground/30 focus:outline-none focus:ring-4 focus:ring-primary/20 box-glow transition-all"
+          />
+        </div>
+
+        <button 
+          onClick={handleLogin}
+          disabled={isLoading || !studentCode}
+          className="w-full py-4 bg-primary text-primary-foreground text-xl font-bold rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed font-korean shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+        >
+          {isLoading ? '시스템 접속 중...' : '작전 시작'}
+        </button>
       </div>
 
-      <p className="mt-4 text-sm text-muted-foreground font-korean">
-        {isLoading ? '접속 중...' : '엔터(Enter)를 눌러 접속하세요'}
+      <p className="mt-6 text-sm text-muted-foreground font-korean animate-bounce">
+        {isLoading ? '데이터 동기화 중...' : '엔터(Enter)를 눌러 접속하세요'}
       </p>
 
-      <div className="mt-8 text-xs text-muted-foreground/60 font-korean">
+      {/* Footer Info */}
+      <div className="absolute bottom-4 text-xs text-muted-foreground/40 font-korean text-center">
+        <p>SYSTEM VER. 2.0 // SECURE CONNECTION</p>
         <p>테스터 코드: TESTER, TEST, DEMO</p>
       </div>
+
+      {/* Teacher Settings Trigger */}
+      <button
+        onClick={() => setShowSetup(true)}
+        className="absolute top-4 right-4 p-3 text-primary/40 hover:text-primary transition-colors duration-300"
+        title="선생님 설정"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.39a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+      </button>
     </div>
   );
-
 };
